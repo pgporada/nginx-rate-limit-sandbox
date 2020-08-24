@@ -2,9 +2,7 @@
 
 NGINX Rate limiting is more traffic-shaping than pure rate-limiting. And this is an important point to understand how it works with the `burst` and `no_delay` settings.
 
-
 Tools: Docker, and [Siege](https://www.joedog.org/siege-home/) (you can brew-it, or use other cli load-testing tools like ab or artillery or anything you like!)
-
 
 The Nginx config defines a few locations to test the various combinations of:
 - limit_req_zone by uri or by ip
@@ -18,6 +16,8 @@ The rates defined are:
 With the leaky bucket, that means a new request should be allowed ever 2 seconds.
 
 The endpoints defined are:
+- http://127.0.0.1:80/get-entries
+- http://127.0.0.1:80/get-entries_delay
 - http://127.0.0.1:80/by-uri/burst0
 - http://127.0.0.1:80/by-uri/burst0_nodelay
 - http://127.0.0.1:80/by-uri/burst5
@@ -27,35 +27,25 @@ The endpoints defined are:
 - http://127.0.0.1:80/by-ip/burst5
 - http://127.0.0.1:80/by-ip/burst5_nodelay
 
-
-
-
 ## Test it!
 
-Run the Nginx in a docker container:
+Run the Nginx in a docker container. To change a rate limit, adjust `default.conf` and respawn the container.
 
-Choose one of:
-
-    # If you want to see NGINX logs
-    docker run -it --rm -p 80:80 sportebois/nginx-rate-limit-sandbox
-    # If you want to run it in the background
-    NGINX_CONTAINER_ID=$(docker run -d --rm -p 80:80 sportebois/nginx-rate-limit-sandbox)
-    # Then when you want to stop and clean it:
-    docker stop $NGINX_CONTAINER_ID
-
+    tmux
+    sudo docker run -it --rm -p 80:80 -v$(pwd)/default.conf:/etc/nginx/conf.d/default.conf sportebois/nginx-rate-limit-sandbox
 
 Using Siege to send 10 concurrent requests at once on the various endpoints
 The most interesting ones are the burst5 and burst5_nodelay which let you really visualize and remember how nginx deal with burst settings!
 
-    siege -b -r 1 -c 10 http://127.0.0.1:80/by-uri/burst0
-    siege -b -r 1 -c 10 http://127.0.0.1:80/by-uri/burst0_nodelay
-    siege -b -r 1 -c 10 http://127.0.0.1:80/by-uri/burst5
-    siege -b -r 1 -c 10 http://127.0.0.1:80/by-uri/burst5_nodelay
+    siege -v -b -r 1 -c 10 http://127.0.0.1:80/by-uri/burst0
+    siege -v -b -r 1 -c 10 http://127.0.0.1:80/by-uri/burst0_nodelay
+    siege -v -b -r 1 -c 10 http://127.0.0.1:80/by-uri/burst5
+    siege -v -b -r 1 -c 10 http://127.0.0.1:80/by-uri/burst5_nodelay
 
-    siege -b -r 1 -c 10 http://127.0.0.1:80/by-ip/burst0
-    siege -b -r 1 -c 10 http://127.0.0.1:80/by-ip/burst0_nodelay
-    siege -b -r 1 -c 10 http://127.0.0.1:80/by-ip/burst5
-    siege -b -r 1 -c 10 http://127.0.0.1:80/by-ip/burst5_nodelay
+    siege -v -b -r 1 -c 10 http://127.0.0.1:80/by-ip/burst0
+    siege -v -b -r 1 -c 10 http://127.0.0.1:80/by-ip/burst0_nodelay
+    siege -v -b -r 1 -c 10 http://127.0.0.1:80/by-ip/burst5
+    siege -v -b -r 1 -c 10 http://127.0.0.1:80/by-ip/burst5_nodelay
 
 When doing these tests, you will want to pay attention to:
 - the success/status code (obviously)

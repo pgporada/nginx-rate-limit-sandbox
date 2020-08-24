@@ -29,10 +29,14 @@ The endpoints defined are:
 
 ## Test it!
 
+Build a container
+
+    sudo docker build . -t nginx-rate-limit-tester
+
 Run the Nginx in a docker container. To change a rate limit, adjust `default.conf` and respawn the container.
 
     tmux
-    sudo docker run -it --rm -p 80:80 -v$(pwd)/default.conf:/etc/nginx/conf.d/default.conf sportebois/nginx-rate-limit-sandbox
+    sudo docker run -it --rm -p 80:80 -v$(pwd)/default.conf:/etc/nginx/conf.d/default.conf nginx-rate-limit-tester
 
 Using Siege to send 10 concurrent requests at once on the various endpoints
 The most interesting ones are the burst5 and burst5_nodelay which let you really visualize and remember how nginx deal with burst settings!
